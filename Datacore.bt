@@ -1,0 +1,180 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: Datacore.bt
+//   Authors: Travis Law
+//   Version: v0.1
+//   Purpose: Defines a template for 
+//            Star Citizen Datacore files
+//  Category: Game
+// File Mask: *.dcb
+//  ID Bytes: 
+//   History: 
+//   v0.1 3-18-2021 Travis Law: Initial release
+//------------------------------------------------
+
+//Based off of https://github.com/dolkensp/unp4k/ unforge utility
+
+//010 File I/O parameters
+
+LittleEndian();
+
+//Type definitions
+
+typedef struct bool{
+    byte boolVar <format=decimal>;
+};
+
+typedef struct DFStringLookup {
+    uint32 lookup;
+};
+
+typedef struct header {
+    uint32 unknownVar1;
+    int32 fileVer;
+    uint32 unknownVar2[2];
+};
+
+typedef struct typeValueCounts {
+    int32 structDefinitionCount;
+    int32 propertyDefinitionCount;
+    int32 enumDefinitionCount;
+    int32 dataDefinitionCount;
+    int32 recordDefinitionCount;
+
+    int32 booleanValueCount;
+    int32 int8ValueCount;
+    int32 int16ValueCount;
+    int32 int32ValueCount;
+    int32 int64ValueCount;
+    int32 uint8ValueCount;
+    int32 uint16ValueCount;
+    int32 uint32ValueCount;
+    int32 uint64ValueCount;
+
+    int32 singleValueCount;
+    int32 doubleValueCount;
+    int32 guidValueCount;
+    int32 stringValueCount;
+    int32 localeValueCount;
+    int32 enumValueCount;
+    int32 strongValueCount;
+    int32 weakValueCount;
+
+    int32 referenceValueCount;
+    int32 enumOptionCount;
+    uint32 textLength;
+    int32 Unknown; //Legacy?
+};
+
+typedef struct DFStruct {
+    uint32 nameOffset;
+    uint32 parentTypeIndex;
+    uint16 attributeCount;
+    uint16 firstAttributeIndex;
+    uint32 nodeType;
+};
+
+typedef struct DFProperty {
+    uint32 nameOffest;
+    uint16 structIndex;
+    uint16 dataType;
+    uint16 conversionType;
+    uint16 padding;
+};
+
+typedef struct DFEnum {
+    uint32 nameOffset;
+    uint16 valueCount;
+    uint16 firstValueIndex;
+};
+
+typedef struct DFDataMap {
+    if(headerInfo.fileVer >= 5) {
+        uint32 structCount;
+        uint32 structIndex;
+    } else {
+        uint16 structCount;
+        uint16 structIndex;
+    }
+};
+
+typedef struct DFRecord {
+    uint32 nameOffset;
+    //(!isLegacy) {uint32 fileNameOffset; }
+    uint32 fileNameOffset;
+    uint32 structIndex;
+
+    GUID hash;
+
+    uint16 varientIndex;
+    uint16 otherIndex;
+};
+
+typedef struct DFReference {
+    uint32 item;
+    GUID value;
+};
+
+struct DFPointer {
+    uint32 structType;
+    uint32 index;
+};
+
+//Complex types
+
+header headerInfo <bgcolor=cLtBlue>;
+typeValueCounts typeValC <bgcolor=cLtGreen>;
+DFStruct StructVals[typeValC.structDefinitionCount] <bgcolor=cLtRed>;
+DFProperty PropertyVals[typeValC.propertyDefinitionCount] <bgcolor=cLtBlue>;
+DFEnum EnumVals[typeValC.enumDefinitionCount] <bgcolor=cLtGreen>;
+DFDataMap DataMapVals[typeValC.dataDefinitionCount] <bgcolor=cLtRed>;
+DFRecord RecordVals[typeValC.recordDefinitionCount] <bgcolor=cLtBlue>;
+
+//Simple types
+
+byte int8Vals[typeValC.int8ValueCount] <format=decimal, bgcolor=cLtGreen>;
+int16 int16Vals[typeValC.int16ValueCount] <bgcolor=cLtRed>;
+int32 int32Vals[typeValC.int32ValueCount] <bgcolor=cLtGray>;
+int64 int64Vals[typeValC.int64ValueCount] <bgcolor=cLtBlue>;
+ubyte uint8Vals[typeValC.uint8ValueCount] <format=decimal, bgcolor=cLtGreen>;
+uint16 uint16Vals[typeValC.uint16ValueCount] <bgcolor=cLtRed>;
+uint32 uint32Vals[typeValC.uint32ValueCount] <bgcolor=cLtBlue>;
+uint64 uint64Vals[typeValC.uint64ValueCount] <bgcolor=cLtGreen>;
+bool boolVals[typeValC.booleanValueCount] <bgcolor=cLtRed>;
+float singleVals[typeValC.singleValueCount] <bgcolor=cLtBlue>;
+double doubleVals[typeValC.doubleValueCount] <bgcolor=cLtGreen>;
+GUID GUIDVals[typeValC.guidValueCount] <bgcolor=cLtRed>;
+DFStringLookup stringVals[typeValC.stringValueCount] <bgcolor=cLtBlue>;
+uint32 localeVals[typeValC.localeValueCount] <bgcolor=cLtGreen>; //What is this datatype?
+uint32 enumVals[typeValC.enumValueCount] <bgcolor=cLtRed>;
+
+//Pointer types
+
+DFPointer strongVals[typeValC.strongValueCount] <bgcolor=cLtBlue>;
+DFPointer weakVals[typeValC.weakValueCount] <bgcolor=cLtGreen>;
+
+//Misc types
+
+DFReference referenceVals[typeValC.referenceValueCount] <bgcolor=cLtRed>;
+DFStringLookup enumOptionVals[typeValC.enumOptionCount] <bgcolor=cLtRed>;
+
+//Lookup tables?
+
+local int pos = FTell();
+local int textEndOffset = FTell() + typeValC.textLength;
+struct stringTable {
+    while(pos < textEndOffset) {
+        struct stringValue {
+            string value;
+        } strValue;
+        pos = FTell();
+    }
+} strTable <bgcolor=cLtBlue>;
+
+//TODO
+pos = FTell();
+local int fileSize = FileSize();
+local int bufLength = fileSize-pos;
+
+byte tempRemainingBuf[bufLength] <bgcolor=cYellow>;
