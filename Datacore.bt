@@ -83,12 +83,6 @@ typedef struct DFProperty {
     uint16 padding;
 };
 
-typedef struct DFEnum {
-    uint32 nameOffset;
-    uint16 valueCount;
-    uint16 firstValueIndex;
-};
-
 typedef struct DFDataMap {
     if(headerInfo.fileVer >= 5) {
         uint32 structCount;
@@ -121,48 +115,93 @@ struct DFPointer {
     uint32 index;
 };
 
-//Complex types
+header          headerInfo                                     <bgcolor=cLtBlue>;
+typeValueCounts typeValC                                       <bgcolor=cLtGreen>;
 
-header headerInfo <bgcolor=cLtBlue>;
-typeValueCounts typeValC <bgcolor=cLtGreen>;
-DFStruct StructVals[typeValC.structDefinitionCount] <bgcolor=cLtRed>;
-DFProperty PropertyVals[typeValC.propertyDefinitionCount] <bgcolor=cLtBlue>;
-DFEnum EnumVals[typeValC.enumDefinitionCount] <bgcolor=cLtGreen>;
-DFDataMap DataMapVals[typeValC.dataDefinitionCount] <bgcolor=cLtRed>;
-DFRecord RecordVals[typeValC.recordDefinitionCount] <bgcolor=cLtBlue>;
+//Complex types
+DFStruct        StructVals[typeValC.structDefinitionCount]     <bgcolor=cLtRed>;
+DFProperty      PropertyVals[typeValC.propertyDefinitionCount] <bgcolor=cLtBlue>;
+
+///////////////////////////////////////////////////////////////////////////////
+// START: DFEnumCollection                                                   //
+///////////////////////////////////////////////////////////////////////////////
+
+// Fake node for each enum option
+typedef struct (uint32 name, uint16 option) {
+    local uint32 nameOffset  = name;
+    local uint16 optionIndex = option;
+} DFEnumValue <name=DFEnumValue_Name>;
+
+// Enum Definition
+typedef struct {
+    uint32 nameOffset       <hidden=true>;
+    uint16 valueCount       <hidden=true>;
+    uint16 firstOptionIndex <hidden=true>;
+
+    local uint16 i          <hidden=true>;
+    local uint16 color      <hidden=true>;
+    for (i = 0; i < valueCount; i++)
+    {
+        DFEnumValue value (nameOffset, firstOptionIndex + i);
+    }
+} DFEnum <name=DFEnum_Name>;
+
+// Collection to wrap the EnumDefinition array, as optimize must be set to false
+struct DFEnumCollection {
+    DFEnum EnumDefinition[typeValC.enumDefinitionCount] <bgcolor=cLtGreen, optimize=false>;
+} DFEnums;
+
+string DFEnum_Name( DFEnum &data )
+{
+    return ReadString(textStartOffset + data.nameOffset);
+}
+
+string DFEnumValue_Name( DFEnumValue &data )
+{
+    return ReadString(textStartOffset + enumOptionVals[data.optionIndex]);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// End: DFEnumCollection                                                     //
+///////////////////////////////////////////////////////////////////////////////
+
+DFDataMap       DataMapVals[typeValC.dataDefinitionCount]      <bgcolor=cLtRed>;
+DFRecord        RecordVals[typeValC.recordDefinitionCount]     <bgcolor=cLtBlue>;
 
 //Simple types
 
-byte int8Vals[typeValC.int8ValueCount] <format=decimal, bgcolor=cLtGreen>;
-int16 int16Vals[typeValC.int16ValueCount] <bgcolor=cLtRed>;
-int32 int32Vals[typeValC.int32ValueCount] <bgcolor=cLtGray>;
-int64 int64Vals[typeValC.int64ValueCount] <bgcolor=cLtBlue>;
-ubyte uint8Vals[typeValC.uint8ValueCount] <format=decimal, bgcolor=cLtGreen>;
-uint16 uint16Vals[typeValC.uint16ValueCount] <bgcolor=cLtRed>;
-uint32 uint32Vals[typeValC.uint32ValueCount] <bgcolor=cLtBlue>;
-uint64 uint64Vals[typeValC.uint64ValueCount] <bgcolor=cLtGreen>;
-bool boolVals[typeValC.booleanValueCount] <bgcolor=cLtRed>;
-float singleVals[typeValC.singleValueCount] <bgcolor=cLtBlue>;
-double doubleVals[typeValC.doubleValueCount] <bgcolor=cLtGreen>;
-GUID GUIDVals[typeValC.guidValueCount] <bgcolor=cLtRed>;
-DFStringLookup stringVals[typeValC.stringValueCount] <bgcolor=cLtBlue>;
-uint32 localeVals[typeValC.localeValueCount] <bgcolor=cLtGreen>; //What is this datatype?
-uint32 enumVals[typeValC.enumValueCount] <bgcolor=cLtRed>;
+byte            int8Vals[typeValC.int8ValueCount]              <bgcolor=cLtGreen, format=decimal>;
+int16           int16Vals[typeValC.int16ValueCount]            <bgcolor=cLtRed>;
+int32           int32Vals[typeValC.int32ValueCount]            <bgcolor=cLtGray>;
+int64           int64Vals[typeValC.int64ValueCount]            <bgcolor=cLtBlue>;
+ubyte           uint8Vals[typeValC.uint8ValueCount]            <bgcolor=cLtGreen, format=decimal>;
+uint16          uint16Vals[typeValC.uint16ValueCount]          <bgcolor=cLtRed>;
+uint32          uint32Vals[typeValC.uint32ValueCount]          <bgcolor=cLtBlue>;
+uint64          uint64Vals[typeValC.uint64ValueCount]          <bgcolor=cLtGreen>;
+bool            boolVals[typeValC.booleanValueCount]           <bgcolor=cLtRed>;
+float           singleVals[typeValC.singleValueCount]          <bgcolor=cLtBlue>;
+double          doubleVals[typeValC.doubleValueCount]          <bgcolor=cLtGreen>;
+GUID            GUIDVals[typeValC.guidValueCount]              <bgcolor=cLtRed>;
+uint32          stringVals[typeValC.stringValueCount]          <bgcolor=cLtBlue>;
+uint32          localeVals[typeValC.localeValueCount]          <bgcolor=cLtGreen>; //What is this datatype?
+uint32          enumVals[typeValC.enumValueCount]              <bgcolor=cLtRed>;
 
 //Pointer types
 
-DFPointer strongVals[typeValC.strongValueCount] <bgcolor=cLtBlue>;
-DFPointer weakVals[typeValC.weakValueCount] <bgcolor=cLtGreen>;
+DFPointer       strongVals[typeValC.strongValueCount]          <bgcolor=cLtBlue>;
+DFPointer       weakVals[typeValC.weakValueCount]              <bgcolor=cLtGreen>;
 
 //Misc types
 
-DFReference referenceVals[typeValC.referenceValueCount] <bgcolor=cLtRed>;
-DFStringLookup enumOptionVals[typeValC.enumOptionCount] <bgcolor=cLtRed>;
+DFReference     referenceVals[typeValC.referenceValueCount]    <bgcolor=cLtRed>;
+uint32          enumOptionVals[typeValC.enumOptionCount]       <bgcolor=cLtRed>;
 
 //Lookup tables?
 
+local int textStartOffset = FTell();
 local int pos = FTell();
 local int textEndOffset = FTell() + typeValC.textLength;
+
 struct stringTable {
     while(pos < textEndOffset) {
         struct stringValue {
